@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <input type="file" multiple accept="image/*" id="picker">
+  <button id="makePdf">Make PDF</button>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    const picker = document.getElementById('picker');
+    const btn = document.getElementById('makePdf');
+
+    btn.onclick = async () => {
+      const pdf = await PDFLib.PDFDocument.create();
+
+      for (const file of picker.files) {
+        const bytes = await file.arrayBuffer();
+        const img = file.type.includes('png')
+          ? await pdf.embedPng(bytes)
+          : await pdf.embedJpg(bytes);
+
+        const page = pdf.addPage([img.width, img.height]);
+        page.drawImage(img, {
+          x: 0, y: 0,
+          width: img.width,
+          height: img.height
+        });
+      }
+
+      const pdfBytes = await pdf.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'images.pdf';
+      a.click();
+    };
+  </script>
+</body>
+</html>
